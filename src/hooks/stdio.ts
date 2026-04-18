@@ -23,6 +23,17 @@ export async function readJsonStdin<T>(): Promise<T | null> {
 }
 
 export function writeBlock(reason: string): void {
-  process.stdout.write(JSON.stringify({ block: true, reason }));
+  // Modern Claude Code PreToolUse hook contract: stdout JSON with
+  // hookSpecificOutput.permissionDecision = "deny". Stderr + exit 2 remain
+  // as a legacy fallback for older Claude Code builds.
+  const response = {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  };
+  process.stdout.write(`${JSON.stringify(response)}\n`);
+  process.stderr.write(`${reason}\n`);
   process.exit(2);
 }

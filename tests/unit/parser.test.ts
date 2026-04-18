@@ -83,4 +83,27 @@ describe("parsePlanHeuristic", () => {
     const steps = parsePlanHeuristic(md);
     expect(steps.map((s) => s.id)).toEqual(["s1", "s2", "s3", "s4"]);
   });
+
+  it("skips H1 title with only a non-path backticked flag", () => {
+    const md =
+      "# Plan — add `--version` flag to planlock CLI\n\n## Wire the flag\n- Edit `src/cli.ts`\n\n## Verify\n- Run `pnpm test`\n";
+    const steps = parsePlanHeuristic(md);
+    expect(steps).toHaveLength(2);
+    expect(steps[0].summary).toContain("Wire the flag");
+    expect(steps[1].summary).toContain("Verify");
+  });
+
+  it("keeps a heading that names a runnable command", () => {
+    const md = "## Run `pnpm install`\n";
+    const steps = parsePlanHeuristic(md);
+    expect(steps).toHaveLength(1);
+    expect(steps[0].scope.commands).toContain("pnpm install");
+  });
+
+  it("keeps a heading that names a file path", () => {
+    const md = "## Edit `src/cli.ts`\n";
+    const steps = parsePlanHeuristic(md);
+    expect(steps).toHaveLength(1);
+    expect(steps[0].scope.files).toContain("src/cli.ts");
+  });
 });

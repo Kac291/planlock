@@ -1,5 +1,5 @@
 import { PreToolUsePayload } from "../hooks/payload.js";
-import { readJsonStdin } from "../hooks/stdio.js";
+import { readJsonStdin, writeBlock } from "../hooks/stdio.js";
 import { replaySessionSteps, scoreCall } from "../match/engine.js";
 import { extractToolCall } from "../match/extract.js";
 import { decidePolicy } from "../match/policy.js";
@@ -51,6 +51,9 @@ export async function runMatchTool(): Promise<void> {
   };
   appendEvent(stateRoot, sessionId, driftEvent);
   const decision = decidePolicy(config.mode, result.verdict, result.reason);
+  if (decision.block) {
+    writeBlock(decision.stderr ?? `planlock strict: blocked — ${result.reason}`);
+    return;
+  }
   if (decision.stderr) process.stderr.write(`${decision.stderr}\n`);
-  if (decision.block) process.exit(2);
 }

@@ -77,10 +77,11 @@ function splitIntoStepBlocks(md: string): string[] {
       const nonEmpty = section.split(/\r?\n/).filter((l) => l.trim().length > 0);
       const onlyHeading = nonEmpty.length === 1 && HEADING.test(nonEmpty[0]);
       if (onlyHeading) {
-        // Bare-heading section with no body — skip unless the heading itself
-        // carries path/command info, in which case it's a real one-liner step.
+        // Bare-heading section with no body — keep only if the heading itself
+        // carries a path or a runnable command (e.g. "## Run `pnpm test`"), not
+        // just any backticked token (e.g. a flag name like `--version`).
         const probe = stepSummary(nonEmpty[0]);
-        if (extractFiles(probe).length === 0 && !/`[^`]+`/.test(probe)) continue;
+        if (extractFiles(probe).length === 0 && extractCommands(probe, []).length === 0) continue;
       }
       out.push(section);
     }

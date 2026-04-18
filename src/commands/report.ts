@@ -4,7 +4,7 @@ import { StopPayload } from "../hooks/payload.js";
 import { readJsonStdin } from "../hooks/stdio.js";
 import { readEvents } from "../state/events.js";
 import { resolveStateRoot, sessionDir } from "../state/paths.js";
-import { readParsedPlan } from "../state/plan-store.js";
+import { findLatestParsedPlan, readParsedPlan } from "../state/plan-store.js";
 import type { AnyEvent, DriftEvent, PlanParsedEvent, Step } from "../types.js";
 
 interface StepTally {
@@ -111,10 +111,16 @@ export async function runReport(): Promise<void> {
   ];
 
   const parsedEvent = latestParsedEvent(events);
-  const steps = parsedEvent ? readParsedPlan(parsedEvent.parsedPath) : null;
+  let steps: Step[] | null = parsedEvent ? readParsedPlan(parsedEvent.parsedPath) : null;
+  if (!steps) {
+    // Session has no plan-parsed event (e.g. the plan was captured by an
+    // earlier session), but a parsed.yaml may still exist on disk.
+    const latest = findLatestParsedPlan(stateRoot);
+    if (latest) steps = latest.steps;
+  }
 
   const body: string[] = [];
-  if (!parsedEvent || !steps) {
+  if (!steps) {
     body.push(
       "_parsed plan not available for this session; upgrade to v0.2 to see drift analysis._",
     );

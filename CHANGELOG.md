@@ -4,6 +4,12 @@ All notable changes to planlock are documented here. Format loosely follows [Kee
 
 ## [Unreleased]
 
+### v0.3.1 — Dogfood-driven patches
+
+- Parser no longer turns an H1 document title containing only a non-path backticked token (e.g. a flag name like `--version`) into a spurious Step; bare headings are kept only when the heading itself carries a real path or a runnable command. Fixes cascading skip-ahead / partial misclassifications where the phantom first step stayed perpetually open.
+- Report now falls back to the latest on-disk `parsed.yaml` when a session has no `plan-parsed` event (e.g. the plan was captured by an earlier session). Previously such sessions always rendered the legacy "parsed plan not available" note.
+- `strict` mode block now emits the modern Claude Code hook JSON on stdout (`{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":...}}`) in addition to exit 2 + stderr, so newer Claude Code builds that key off the JSON contract see a structured deny reason rather than scraping stderr. `writeBlock` (previously dead) is now the canonical block path.
+
 ### v0.3 — Warn / strict modes
 
 - `config.mode` is now live. `observe` (default) keeps the v0.2-a stderr output. `warn` prints a `⚠️ planlock warn (<verdict>)` banner for every non-clean verdict (out-of-scope, skip-ahead, extra, partial) but still exits 0. `strict` blocks `out-of-scope` tool calls with exit 2 and a `planlock strict: blocked — <reason>` stderr line that Claude Code surfaces as the block reason; `skip-ahead` / `extra` / `partial` continue to warn without blocking to avoid over-triggering on legitimate reordering or path-less commands.

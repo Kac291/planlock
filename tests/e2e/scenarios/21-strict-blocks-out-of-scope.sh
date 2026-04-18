@@ -39,6 +39,12 @@ fi
 assert_contains "strict header in stderr" "$CLI_STDERR" "planlock strict: blocked"
 assert_contains "reason mentions no-step-covers" "$CLI_STDERR" "billing/invoice.ts"
 
+# Modern Claude Code hook contract: stdout JSON must carry
+# hookSpecificOutput.permissionDecision = "deny".
+assert_contains "stdout has PreToolUse hook envelope" "$CLI_STDOUT" '"hookEventName":"PreToolUse"'
+assert_contains "stdout has permissionDecision=deny" "$CLI_STDOUT" '"permissionDecision":"deny"'
+assert_contains "stdout has permissionDecisionReason" "$CLI_STDOUT" '"permissionDecisionReason"'
+
 # Drift event must still be persisted (block happens after append).
 events_file="$(e2e_session_events_file "$SID")"
 drift_count=$(count_events "$events_file" drift)

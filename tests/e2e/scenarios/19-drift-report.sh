@@ -43,10 +43,12 @@ assert_contains "out-of-scope section" "$report_body" "## Out-of-scope events"
 assert_contains "billing flagged" "$report_body" "src/billing/invoice.ts"
 assert_contains "drift score line" "$report_body" "Drift score:"
 
-# Legacy-mode fallback: a session with no parsed plan should fall back to the note.
+# Legacy-mode fallback: a session with no parsed plan AND no parsed.yaml on disk
+# (v0.3.1 added cross-session fallback, so the legacy note only shows when no
+# parsed.yaml exists anywhere under .planlock/plans).
 SID2="sess-S19-legacy"
 LEGACY_STOP=$(node -e "console.log(JSON.stringify({session_id:'$SID2',cwd:process.argv[1]}))" "$CWD")
-# seed an empty events file so report runs
+rm -f "$STATE_ROOT"/plans/*.parsed.yaml
 mkdir -p "$STATE_ROOT/sessions/$SID2"
 : > "$STATE_ROOT/sessions/$SID2/events.jsonl"
 run_cli report "$LEGACY_STOP"
