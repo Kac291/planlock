@@ -24,7 +24,10 @@ const TSX_BIN = path.join(
   process.platform === "win32" ? "tsx.cmd" : "tsx",
 );
 
-function runCli(args: string[], _opts: { cwd: string; stdin?: string }): {
+function runCli(
+  args: string[],
+  _opts: { cwd: string; stdin?: string },
+): {
   stdout: string;
   stderr: string;
   status: number;
@@ -80,7 +83,11 @@ describe("capture-plan integration", () => {
     expect(existsSync(storeDir)).toBe(true);
     const stored = readdirSync(storeDir);
     expect(stored).toHaveLength(1);
-    expect(readFileSync(path.join(storeDir, stored[0]!), "utf8")).toContain("# test plan");
+    const [firstStored] = stored;
+    expect(firstStored).toBeDefined();
+    expect(readFileSync(path.join(storeDir, firstStored as string), "utf8")).toContain(
+      "# test plan",
+    );
 
     const eventsPath = path.join(cwd, ".planlock", "sessions", "sess-abc", "events.jsonl");
     expect(existsSync(eventsPath)).toBe(true);
@@ -89,6 +96,6 @@ describe("capture-plan integration", () => {
       .split("\n")
       .map((l) => JSON.parse(l) as AnyEvent);
     expect(events).toHaveLength(1);
-    expect(events[0]!.type).toBe("plan-captured");
+    expect(events[0]?.type).toBe("plan-captured");
   });
 });

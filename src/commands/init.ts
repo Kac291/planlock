@@ -22,21 +22,20 @@ interface SettingsShape {
   [key: string]: unknown;
 }
 
-const PLANLOCK_HOOKS: SettingsShape["hooks"] = {
-  PreToolUse: [
-    {
-      matcher: "ExitPlanMode",
-      hooks: [{ type: "command", command: "planlock capture-plan" }],
-    },
-    {
-      matcher: "*",
-      hooks: [{ type: "command", command: "planlock match-tool" }],
-    },
-  ],
-  Stop: [{ hooks: [{ type: "command", command: "planlock report" }] }],
-};
+const PLANLOCK_PRE_TOOL_USE: HookBlock[] = [
+  {
+    matcher: "ExitPlanMode",
+    hooks: [{ type: "command", command: "planlock capture-plan" }],
+  },
+  {
+    matcher: "*",
+    hooks: [{ type: "command", command: "planlock match-tool" }],
+  },
+];
 
-function mergeHookBlocks(existing: HookBlock[] = [], incoming: HookBlock[]): HookBlock[] {
+const PLANLOCK_STOP: HookBlock[] = [{ hooks: [{ type: "command", command: "planlock report" }] }];
+
+function mergeHookBlocks(incoming: HookBlock[], existing: HookBlock[]): HookBlock[] {
   const seen = new Set(
     existing.map((b) => `${b.matcher ?? ""}|${b.hooks.map((h) => h.command).join(",")}`),
   );
@@ -56,8 +55,8 @@ function writeSettings(cwd: string): void {
     ? (JSON.parse(readFileSync(file, "utf8")) as SettingsShape)
     : {};
   current.hooks = current.hooks ?? {};
-  current.hooks.PreToolUse = mergeHookBlocks(current.hooks.PreToolUse, PLANLOCK_HOOKS!.PreToolUse!);
-  current.hooks.Stop = mergeHookBlocks(current.hooks.Stop, PLANLOCK_HOOKS!.Stop!);
+  current.hooks.PreToolUse = mergeHookBlocks(PLANLOCK_PRE_TOOL_USE, current.hooks.PreToolUse ?? []);
+  current.hooks.Stop = mergeHookBlocks(PLANLOCK_STOP, current.hooks.Stop ?? []);
   writeFileSync(file, `${JSON.stringify(current, null, 2)}\n`, "utf8");
 }
 

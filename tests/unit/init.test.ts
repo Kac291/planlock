@@ -32,7 +32,7 @@ describe("commands/init", () => {
     const commands = settings.hooks.PreToolUse.flatMap((b) => b.hooks.map((h) => h.command));
     expect(commands).toContain("planlock capture-plan");
     expect(commands).toContain("planlock match-tool");
-    expect(settings.hooks.Stop[0]!.hooks[0]!.command).toBe("planlock report");
+    expect(settings.hooks.Stop[0]?.hooks[0]?.command).toBe("planlock report");
 
     const gi = readFileSync(path.join(cwd, ".gitignore"), "utf8");
     expect(gi).toContain(".planlock/");

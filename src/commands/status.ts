@@ -13,11 +13,11 @@ export function runStatus(cwd: string = process.cwd()): void {
   const sessions = readdirSync(sessionsDir)
     .map((id) => ({ id, mtime: statSync(path.join(sessionsDir, id)).mtime }))
     .sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-  if (sessions.length === 0) {
+  const latest = sessions[0];
+  if (!latest) {
     process.stdout.write("planlock: no sessions recorded yet.\n");
     return;
   }
-  const latest = sessions[0]!;
   const events = readEvents(stateRoot, latest.id);
   const captured = events.filter((e) => e.type === "plan-captured").length;
   const calls = events.filter((e) => e.type === "tool-call").length;
