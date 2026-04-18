@@ -4,6 +4,12 @@ All notable changes to planlock are documented here. Format loosely follows [Kee
 
 ## [Unreleased]
 
+### v0.3 — Warn / strict modes
+
+- `config.mode` is now live. `observe` (default) keeps the v0.2-a stderr output. `warn` prints a `⚠️ planlock warn (<verdict>)` banner for every non-clean verdict (out-of-scope, skip-ahead, extra, partial) but still exits 0. `strict` blocks `out-of-scope` tool calls with exit 2 and a `planlock strict: blocked — <reason>` stderr line that Claude Code surfaces as the block reason; `skip-ahead` / `extra` / `partial` continue to warn without blocking to avoid over-triggering on legitimate reordering or path-less commands.
+- Pure policy function `src/match/policy.ts` decides `{stderr, block}` from `(mode, verdict, reason)` — fully unit tested (12 cases covering every mode × verdict pairing).
+- Drift events are still persisted before blocking, so reports remain complete.
+
 ### v0.2-a — Heuristic parse + path/op match (observe only)
 
 - Heuristic plan parser (`src/parser/heuristic.ts`) extracts steps, file globs, commands, and operation hints from plan markdown; writes `.planlock/plans/<id>.parsed.yaml` on capture and emits a `plan-parsed` event.

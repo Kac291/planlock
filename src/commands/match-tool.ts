@@ -2,13 +2,12 @@ import { PreToolUsePayload } from "../hooks/payload.js";
 import { readJsonStdin } from "../hooks/stdio.js";
 import { replaySessionSteps, scoreCall } from "../match/engine.js";
 import { extractToolCall } from "../match/extract.js";
+import { decidePolicy } from "../match/policy.js";
 import { loadConfig } from "../state/config.js";
 import { appendEvent, readEvents } from "../state/events.js";
 import { resolveStateRoot } from "../state/paths.js";
 import { findLatestParsedPlan } from "../state/plan-store.js";
 import type { DriftEvent, ToolCallEvent } from "../types.js";
-
-const VISIBLE_VERDICTS = new Set(["out-of-scope", "skip-ahead", "extra"]);
 
 export async function runMatchTool(): Promise<void> {
   const raw = await readJsonStdin<unknown>();
@@ -51,7 +50,7 @@ export async function runMatchTool(): Promise<void> {
     reason: result.reason,
   };
   appendEvent(stateRoot, sessionId, driftEvent);
-  if (VISIBLE_VERDICTS.has(result.verdict)) {
-    process.stderr.write(`planlock: ${result.verdict} — ${result.reason}\n`);
-  }
+  const decision = decidePolicy(config.mode, result.verdict, result.reason);
+  if (decision.stderr) process.stderr.write(`${decision.stderr}\n`);
+  if (decision.block) process.exit(2);
 }
