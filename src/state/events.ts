@@ -13,8 +13,15 @@ export function appendEvent(stateRoot: string, sessionId: string, event: AnyEven
 export function readEvents(stateRoot: string, sessionId: string): AnyEvent[] {
   const file = path.join(sessionDir(stateRoot, sessionId), "events.jsonl");
   if (!existsSync(file)) return [];
-  return readFileSync(file, "utf8")
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .map((line) => JSON.parse(line) as AnyEvent);
+  const out: AnyEvent[] = [];
+  for (const line of readFileSync(file, "utf8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      out.push(JSON.parse(trimmed) as AnyEvent);
+    } catch {
+      // A torn last line (process killed mid-append) must not poison the whole log.
+    }
+  }
+  return out;
 }

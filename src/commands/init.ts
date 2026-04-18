@@ -51,9 +51,16 @@ function writeSettings(cwd: string): void {
   const dir = path.join(cwd, ".claude");
   mkdirSync(dir, { recursive: true });
   const file = path.join(dir, "settings.local.json");
-  const current: SettingsShape = existsSync(file)
-    ? (JSON.parse(readFileSync(file, "utf8")) as SettingsShape)
-    : {};
+  let current: SettingsShape = {};
+  if (existsSync(file)) {
+    try {
+      current = JSON.parse(readFileSync(file, "utf8")) as SettingsShape;
+    } catch {
+      process.stderr.write(
+        `planlock: ${file} is not valid JSON — rewriting with a clean hook config\n`,
+      );
+    }
+  }
   current.hooks = current.hooks ?? {};
   current.hooks.PreToolUse = mergeHookBlocks(PLANLOCK_PRE_TOOL_USE, current.hooks.PreToolUse ?? []);
   current.hooks.Stop = mergeHookBlocks(PLANLOCK_STOP, current.hooks.Stop ?? []);

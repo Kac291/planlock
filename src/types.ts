@@ -18,6 +18,51 @@ export interface ToolCallEvent {
   toolInput: unknown;
 }
 
+export interface StepScope {
+  files: string[];
+  commands: string[];
+  operations: string[];
+}
+
+export interface Step {
+  id: string;
+  summary: string;
+  scope: StepScope;
+  dependencies: string[];
+}
+
+export interface PlanParsedEvent {
+  type: "plan-parsed";
+  timestamp: string;
+  sessionId: string;
+  cwd: string;
+  planId: string;
+  parsedPath: string;
+  stepCount: number;
+  strategy: "heuristic";
+}
+
+export type DriftVerdict =
+  | "match"
+  | "partial"
+  | "skip-ahead"
+  | "out-of-scope"
+  | "extra"
+  | "neutral";
+
+export interface DriftEvent {
+  type: "drift";
+  timestamp: string;
+  sessionId: string;
+  cwd: string;
+  verdict: DriftVerdict;
+  toolName: string;
+  paths: string[];
+  stepId: string | null;
+  score: number;
+  reason: string;
+}
+
 export interface PlanlockConfig {
   mode: "observe" | "warn" | "strict";
   thresholds: {
@@ -27,7 +72,7 @@ export interface PlanlockConfig {
   ignoreMinorExtras: boolean;
 }
 
-export type AnyEvent = PlanCapturedEvent | ToolCallEvent;
+export type AnyEvent = PlanCapturedEvent | ToolCallEvent | PlanParsedEvent | DriftEvent;
 
 export const DEFAULT_CONFIG: PlanlockConfig = {
   mode: "observe",

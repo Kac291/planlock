@@ -82,8 +82,11 @@ describe("capture-plan integration", () => {
     const storeDir = path.join(cwd, ".planlock", "plans");
     expect(existsSync(storeDir)).toBe(true);
     const stored = readdirSync(storeDir);
-    expect(stored).toHaveLength(1);
-    const [firstStored] = stored;
+    const mdFiles = stored.filter((f) => f.endsWith(".md"));
+    const parsedFiles = stored.filter((f) => f.endsWith(".parsed.yaml"));
+    expect(mdFiles).toHaveLength(1);
+    expect(parsedFiles).toHaveLength(1);
+    const [firstStored] = mdFiles;
     expect(firstStored).toBeDefined();
     expect(readFileSync(path.join(storeDir, firstStored as string), "utf8")).toContain(
       "# test plan",
@@ -95,7 +98,8 @@ describe("capture-plan integration", () => {
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l) as AnyEvent);
-    expect(events).toHaveLength(1);
+    expect(events).toHaveLength(2);
     expect(events[0]?.type).toBe("plan-captured");
+    expect(events[1]?.type).toBe("plan-parsed");
   });
 });

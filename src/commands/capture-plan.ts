@@ -1,10 +1,12 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { PreToolUsePayload } from "../hooks/payload.js";
 import { readJsonStdin } from "../hooks/stdio.js";
+import { parsePlan } from "../parser/index.js";
 import { appendEvent } from "../state/events.js";
 import { plansStoreDir, resolvePlansDir, resolveStateRoot } from "../state/paths.js";
-import type { PlanCapturedEvent } from "../types.js";
+import { parsedPlanPath, readParsedPlan, writeParsedPlan } from "../state/plan-store.js";
+import type { PlanCapturedEvent, PlanParsedEvent, Step } from "../types.js";
 
 function newestMarkdown(dir: string): { file: string; mtime: Date } | null {
   if (!existsSync(dir)) return null;
@@ -64,4 +66,24 @@ export async function runCapturePlan(): Promise<void> {
   };
   appendEvent(stateRoot, sessionId, event);
   process.stdout.write(`planlock: captured plan ${planId} from ${newest.file}\n`);
+
+  const parsedPath = parsedPlanPath(stateRoot, planId);
+  let steps: Step[] | null = existsSync(parsedPath) ? readParsedPlan(parsedPath) : null;
+  if (!steps) {
+    const markdown = readFileSync(storedPath, "utf8");
+    steps = parsePlan(markdown, "heuristic");
+    writeParsedPlan(stateRoot, planId, steps);
+  }
+  const parsedEvent: PlanParsedEvent = {
+    type: "plan-parsed",
+    timestamp: new Date().toISOString(),
+    sessionId,
+    cwd,
+    planId,
+    parsedPath,
+    stepCount: steps.length,
+    strategy: "heuristic",
+  };
+  appendEvent(stateRoot, sessionId, parsedEvent);
+  process.stdout.write(`planlock: parsed ${steps.length} step(s)\n`);
 }
