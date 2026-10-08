@@ -4,6 +4,10 @@ All notable changes to planlock are documented here. Format loosely follows [Kee
 
 ## [Unreleased]
 
+### v0.3.2 — Parser fix
+
+- Parser no longer emits a bogus suffix path when a directory name contains `-` or `.` (e.g. `` `src/config-check/schema.ts` `` also produced `check/schema.ts`; `.github/workflows/ci.yml` also produced `github/workflows/ci.yml`). The raw-path regex lookbehind now excludes `-` and `.` as well as word characters, `/` and backticks. The phantom scope widened the matching step, so a call touching an unrelated `check/` directory could be scored as a match instead of out-of-scope.
+
 ### v0.3.1 — Dogfood-driven patches
 
 - Parser no longer turns an H1 document title containing only a non-path backticked token (e.g. a flag name like `--version`) into a spurious Step; bare headings are kept only when the heading itself carries a real path or a runnable command. Fixes cascading skip-ahead / partial misclassifications where the phantom first step stayed perpetually open.

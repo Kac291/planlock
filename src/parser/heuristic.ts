@@ -125,7 +125,10 @@ function extractFiles(block: string): string[] {
     const token = m[1].trim();
     if (isPathLike(token)) set.add(normalizePath(token));
   }
-  const rawRe = /(?<![`\w/])((?:[\w.-]+\/)+(?:[\w.*-]+(?:\.[\w]+)?)?(?:\/\*+)?)/g;
+  // The lookbehind must also exclude "-" and ".": otherwise a backticked path like
+  // `src/config-check/a.ts` (skipped as a raw match because of the backtick) is
+  // re-matched from inside the directory name, yielding a bogus "check/a.ts".
+  const rawRe = /(?<![`\w/.-])((?:[\w.-]+\/)+(?:[\w.*-]+(?:\.[\w]+)?)?(?:\/\*+)?)/g;
   for (const m of block.matchAll(rawRe)) {
     const token = m[1];
     if (isPathLike(token)) set.add(normalizePath(token));
