@@ -37,6 +37,20 @@ describe("parsePlanHeuristic", () => {
     expect(steps[1].scope.files).toContain("tests/auth/login.test.ts");
   });
 
+  it("does not split hyphenated or dotted directory names into suffix fragments", () => {
+    const md = [
+      "- Edit `src/config-check/schema.ts` to add fields",
+      "- Update packages/ui-kit/button.tsx and .github/workflows/ci.yml",
+    ].join("\n");
+    const steps = parsePlanHeuristic(md);
+    expect(steps[0].scope.files).toEqual(["src/config-check/schema.ts"]);
+    expect(steps[1].scope.files).toEqual(
+      expect.arrayContaining(["packages/ui-kit/button.tsx", ".github/workflows/ci.yml"]),
+    );
+    expect(steps[1].scope.files).not.toContain("kit/button.tsx");
+    expect(steps[1].scope.files).not.toContain("github/workflows/ci.yml");
+  });
+
   it("ignores URL-like tokens", () => {
     const md = "1. See https://example.com/docs for reference\n";
     const steps = parsePlanHeuristic(md);
